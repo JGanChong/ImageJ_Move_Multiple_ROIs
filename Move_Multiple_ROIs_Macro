@@ -1,0 +1,77 @@
+/*  Allows User to move Multiple ROIs at once.
+ *  Select ROIs in the ROI Manager and run Macro. 
+ *  Click any of the ROIs and while clicking, drag it to whenever you want to move it to and release the left click
+ *  Do not click in the image outside of the ROIs
+ *  Press spacebar while clicking image to stop macro. or press ESC
+ * Macro tested with ImageJ 1.53g, Java 1.8.0_172 (64bit) Windows 10
+ * Macro by Johnny Gan Chong email:behappyftw@g.ucla.edu 
+ * June 2021
+ */
+
+
+//Make sure there are atleast 2 rois
+getCursorLoc(x, y, z, flag);
+indexes=split(call("ij.plugin.frame.RoiManager.getIndexesAsString"));
+nRois_selected1 = indexes.length; //check how many ROIs are selected
+run("Select None");
+roiManager("Combine");
+
+
+while (isKeyDown("space")==false) {
+	
+
+	//Wait for user to click 
+	while(flag&16==0 ) { 
+	    getCursorLoc(x, y, z, flag);
+	    nRois_selected1 = indexes.length;
+		indexes = CheckROIs(nRois_selected1, indexes);
+		
+	}
+
+  	//Get initial location of ROIs
+	if(getValue("selection.size")==0){
+		exit("Macro Aborted. User pressed outside ROI");
+	}
+	else {
+		Roi.getBounds(x0, y0, width, height);		
+	}
+	
+
+ 
+
+  	//Wait for user to move ROI
+	while(flag&16>0) {
+		getCursorLoc(x, y, z, flag); 
+		nRois_selected1 = indexes.length; 
+		indexes = CheckROIs(nRois_selected1, indexes);
+  	}
+  	
+	//Get final location of ROIs
+	if(getValue("selection.size")==0){
+		exit("Macro Aborted. User pressed outside ROI");
+	}
+	else {
+		Roi.getBounds(xf, yf, width, height);		
+	}	
+
+	//Move ROI
+	shiftx = xf-x0;
+	shifty = yf-y0;
+	roiManager("select", indexes);
+  	roiManager("translate",shiftx, shifty);
+	roiManager("Combine");
+
+}
+
+//Check if there were changes to ROI selection 
+function CheckROIs(nRois_selected1, indexes) { 
+	nRois_selected2 = RoiManager.selected; //check how many ROIs are selected
+	if (nRois_selected1!=nRois_selected2) { //check if the number of ROIs changed.
+		indexes=split(call("ij.plugin.frame.RoiManager.getIndexesAsString"));
+		run("Select None");
+		roiManager("Combine");
+		
+	}
+	
+	return indexes;	
+}
